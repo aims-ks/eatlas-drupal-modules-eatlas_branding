@@ -1,0 +1,12 @@
+; $Id$
+name = eAtlas Branding fields
+description = This module add a branding capability to image forms.
+core = 7.x
+
+files[] = eatlas_branding_fields.module
+
+package = eAtlas
+
+dependencies[] = eatlas_branding
+
+; This is a sub-module, it does not need the attributes used by the update module.

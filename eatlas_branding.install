@@ -1,0 +1,386 @@
+<?php
+
+/**
+ * Implements hook_uninstall().
+ *     https://api.drupal.org/api/drupal/modules%21system%21system.api.php/function/hook_uninstall/7
+ * NOTE: The Schema is automatically deleted by Drupal,
+ *     loosing all the data associated with this module.
+ */
+function eatlas_branding_uninstall() {
+	field_delete_field(EATLAS_BRANDING_FIELD_BRANDING);
+	field_delete_field(EATLAS_BRANDING_FIELD_SUPPORTED_BRANDINGS);
+}
+
+/**
+ * TODO
+ * X Create the vocabulary 'branding' (EATLAS_BRANDING_VOCABULARY) with one term 'default'
+ * X Create the field 'field_branding' and 'field_supported_brandings' on each node types / file types
+ * X Create the block 'branding_default' (abandonned - it's too hard to create an editable block)
+ *   - 7101: Now using Drupal block logic, no more need for "magic names"
+ * X Add a help manual somewhere to explain how everything is linked together?
+ *   - 7101: It's pretty strait forward now, but has a lot of steps
+ *     http://drupal.eatlas.org.au/modules/eatlas/eatlas_branding/eatlas-branding-doc.html
+ */
+
+/**
+ * Implements: hook_schema().
+ * Define the table that holds extra info about brandings
+ * such as the home page, email address, etc.
+ * Schema API:
+ *   https://api.drupal.org/api/drupal/includes%21database%21schema.inc/group/schemaapi/7
+ * Data types:
+ *   https://www.drupal.org/node/159605
+ */
+function eatlas_branding_schema() {
+	$schema['eatlas_branding'] = array(
+		'description' => 'The eAtlas branding configuration table.',
+		'fields' => array(
+			'tid' => array(
+				'description' => 'The primary identifier for a branding (the term ID).',
+				'type' => 'serial',
+				'unsigned' => TRUE,
+				'not null' => TRUE
+			),
+			'home' => array(
+				'description' => 'The home page URL for this branding.',
+				'type' => 'varchar',
+				'length' => 255,
+				'not null' => TRUE,
+				'default' => 'home'
+			),
+			// New to 7.x-1.1 (7101)
+			'site_name' => array(
+				'description' => 'Site name branding override.',
+				'type' => 'varchar',
+				'length' => 255
+			),
+			// New to 7.x-1.1 (7101)
+			'theme' => array(
+				'description' => 'The theme for this branding.',
+				'type' => 'varchar',
+				'length' => 255
+			),
+			'cid' => array(
+				'description' => 'The contact details.',
+				'type' => 'int',
+				'unsigned' => TRUE,
+				'not null' => TRUE,
+				'default' => 1
+			),
+			'host' => array(
+				'description' => 'The HTTP domain name for this branding.',
+				'type' => 'varchar',
+				'length' => 255
+			),
+			// New to 7.x-2.4 (7201)
+			'geonetwork_categories' => array(
+				'description' => 'GeoNetwork categories.',
+				'type' => 'text',
+				'size' => 'normal'
+			),
+			// New to 7.x-1.2 (7102)
+			'pages' => array(
+				'description' => 'Page filters.',
+				'type' => 'text',
+				'size' => 'normal'
+			),
+		),
+		'foreign keys' => array(
+			'tid' => array(
+				'table' => 'taxonomy_term_data',
+				'columns' => array('tid' => 'tid'),
+			),
+			'cid' => array(
+				'table' => 'contact',
+				'columns' => array('cid' => 'cid'),
+			)
+		),
+		'primary key' => array('tid')
+	);
+
+	$schema['eatlas_branding_policy'] = array(
+		'description' => 'The eAtlas branding policy configuration table.',
+		'fields' => array(
+			'tid' => array(
+				'description' => 'The foreign key to eatlas_branding table.',
+				'type' => 'int',
+				'unsigned' => TRUE,
+				'not null' => TRUE
+			),
+			'pid' => array(
+				'description' => 'The selected branding (the term ID).',
+				'type' => 'int',
+				'unsigned' => TRUE,
+				'not null' => TRUE
+			)
+		),
+		'foreign keys' => array(
+			'tid' => array(
+				'table' => 'eatlas_branding',
+				'columns' => array('tid' => 'tid'),
+			),
+			'pid' => array(
+				'table' => 'taxonomy_term_data',
+				'columns' => array('pid' => 'tid'),
+			)
+		),
+		'primary key' => array('tid', 'pid')
+	);
+
+	return $schema;
+}
+
+/**
+ * Implements hook_install().
+ *   https://api.drupal.org/api/drupal/modules%21system%21system.api.php/function/hook_install/7
+ */
+function eatlas_branding_install() {
+	// According to the API documentation, we can assume that the module
+	// file is already loaded, so the module constants should be usable
+	// in this file.
+
+	_eatlas_branding_create_vocabulary();
+	_eatlas_branding_create_fields();
+
+	// Creation of blocks / menus is left to the admin.
+	// NOTE: The usual way to create blocks is to use Drupal API;
+	//     hook_block_info() and hook_block_view()
+	//     Those blocks however are not editable by the admin and disapear
+	//     as soon as the module is disabled. We need editable blocks
+	//     that will stay in the system.
+	//     The only way to do so seems to do something like:
+	//         https://drupal.org/node/1709954#comment-8592077
+	//             $form_state = array();
+	//             form_load_include($form_state, 'inc', 'block', 'block.admin');
+	//             $form_state['values'] = array(
+	//                 'title' => $title,
+	//                 'info' => $description,
+	//                 ...
+	//             );
+	//             drupal_form_submit('block_add_block_form', $form_state);
+	//     It's not trivial and probably not robust.
+	//     It make more sense to rely on the user to create that block.
+}
+
+// Create the vocabulary branding, if it do not exists already, and create a default term.
+function _eatlas_branding_create_vocabulary() {
+	$branding_vocabulary = taxonomy_vocabulary_machine_name_load(EATLAS_BRANDING_VOCABULARY);
+	if (!$branding_vocabulary) {
+		$branding_vocabulary = new stdClass();
+		$branding_vocabulary->name = 'Branding';
+		$branding_vocabulary->machine_name = EATLAS_BRANDING_VOCABULARY;
+		$branding_vocabulary->description = 'List of all website branding. Do not delete the default branding term "' . EATLAS_BRANDING_DEFAULT_TERM . '".';
+
+		taxonomy_vocabulary_save($branding_vocabulary);
+		watchdog('eatlas_branding', 'Vocabulary ' . EATLAS_BRANDING_VOCABULARY . ' created');
+	} else {
+		watchdog('eatlas_branding', 'Vocabulary ' . EATLAS_BRANDING_VOCABULARY . ' already exists');
+	}
+
+	$terms = taxonomy_term_load_multiple(array(), array('vid' => $branding_vocabulary->vid, 'name' => EATLAS_BRANDING_DEFAULT_TERM));
+	if (empty($terms)) {
+		$branding_default = new stdClass();
+		$branding_default->vid = $branding_vocabulary->vid;
+		$branding_default->name = EATLAS_BRANDING_DEFAULT_TERM;
+		$branding_default->description = 'The branding that represent the whole website.';
+		// Move it on top, -10 should do the trick
+		$branding_default->weight = -10;
+
+		taxonomy_term_save($branding_default);
+		watchdog('eatlas_branding', 'Vocabulary term ' . EATLAS_BRANDING_DEFAULT_TERM . ' created');
+	} else {
+		watchdog('eatlas_branding', 'Vocabulary term ' . EATLAS_BRANDING_DEFAULT_TERM . ' already exists');
+	}
+}
+
+// Create the 'field_branding' and 'field_supported_brandings' fields
+// on each existing node types. Those fields can be removed on node
+// type that do not required the branding capability.
+// Field API reference:
+//     https://api.drupal.org/api/drupal/modules!field!field.module/group/field/7
+// Form API reference:
+//     https://api.drupal.org/api/drupal/developer!topics!forms_api_reference.html/7
+function _eatlas_branding_create_fields() {
+	// The vocabulary has been created in the previous step.
+	// If it do not exists, at this point, maybe it's better to let
+	// Drupal crash the whole install thing...
+	$branding_vocabulary = taxonomy_vocabulary_machine_name_load(EATLAS_BRANDING_VOCABULARY);
+
+	// Interresting article about Taxonomy reference fields
+	// https://drupal.org/node/872194
+	// NOTE: I mix field definition with instance definition to simplify everything...
+	_eatlas_branding_create_field(array(
+		'field_name' => EATLAS_BRANDING_FIELD_BRANDING,
+		'type' => 'taxonomy_term_reference', // Term reference
+		'label' => 'Branding',
+		'description' => 'eAtlas branding automatically created field',
+		'settings' => array(
+			// I spent too much time already trying to find the API doc
+			// for 'taxonomy_term_reference' settings. Some examples used
+			// 'vid', some other used 'vocabulary'. I tried with only 'vid'
+			// and that didn't worked, so I decided to add both. I have
+			// no idea why the 'parent' is hardcoded to 0, but that seems
+			// to work...
+			'allowed_values' => array(
+				array(
+					'vocabulary' => $branding_vocabulary->machine_name,
+					'vid' => $branding_vocabulary->vid,
+					'parent' => 0
+				)
+			)
+		),
+		'required' => TRUE,
+		'widget' => array(
+			'type' => 'options_select' // Select list
+		)
+	));
+	_eatlas_branding_create_field(array(
+		'field_name' => EATLAS_BRANDING_FIELD_SUPPORTED_BRANDINGS,
+		'type' => 'taxonomy_term_reference', // Term reference
+		'label' => 'Supported brandings',
+		'description' => 'eAtlas branding automatically created field',
+		'cardinality' => FIELD_CARDINALITY_UNLIMITED, // Checkboxes instead of Radios
+		'settings' => array(
+			'allowed_values' => array(
+				array(
+					'vocabulary' => $branding_vocabulary->machine_name,
+					'vid' => $branding_vocabulary->vid,
+					'parent' => 0
+				)
+			)
+		),
+		'required' => TRUE,
+		'widget' => array(
+			'type' => 'options_buttons' // Check boxes/radio buttons
+		)
+	));
+}
+
+// Create a field (if it do not already exists)
+// and add it to all node types (that do not already have it)
+// Field info API
+//     https://api.drupal.org/api/drupal/modules%21field%21field.info.inc/7
+// Field crud API (create, update, delete, etc)
+//     https://api.drupal.org/api/drupal/modules%21field%21field.crud.inc/7
+// Field data structure API
+//     https://api.drupal.org/api/drupal/modules%21field%21field.module/group/field/7
+function _eatlas_branding_create_field($field_config) {
+	$field_name = $field_config['field_name'];
+
+	$field = field_info_field($field_name);
+	// If the field do not exists
+	if (!$field) {
+		$field = field_create_field($field_config);
+		watchdog('eatlas_branding', 'Field "'.$field_name.'" created');
+	} else {
+		watchdog('eatlas_branding', 'Field "'.$field_name.'" already exists');
+	}
+
+	// Get the list of bundles (node types) for which the field is already installed
+	$installed_node_bundles = isset($field['bundles']['node']) ? $field['bundles']['node'] : NULL;
+	// Get a complete list of all bundles (node types)
+	$node_types = node_type_get_types();
+	if (!empty($node_types)) {
+		foreach ($node_types as $bundle => $node_type) {
+			// NOTE: Book pages take the branding of the book cover
+			if ($bundle !== 'book') {
+				if (empty($installed_node_bundles) || !in_array($bundle, $installed_node_bundles)) {
+					$field_instance_config = $field_config;
+					$field_instance_config['entity_type'] = 'node';
+					$field_instance_config['bundle'] = $bundle;
+					field_create_instance($field_instance_config);
+					watchdog('eatlas_branding', 'Field "'.$field_name.'" added to "'.$bundle.'".');
+				} else {
+					watchdog('eatlas_branding', 'Field "'.$field_name.'" is already setup for "'.$bundle.'".');
+				}
+			}
+		}
+	}
+
+	// Get the list of bundles (file types) for which the field is already installed
+	$installed_file_bundles = isset($field['bundles']['file']) ? $field['bundles']['file'] : NULL;
+	// Get a complete list of all bundles (node types)
+	$file_types = _eatlas_branding_get_media_types();
+	if (!empty($file_types)) {
+		foreach ($file_types as $bundle => $file_type) {
+			if (empty($installed_file_bundles) || !in_array($bundle, $installed_file_bundles)) {
+				$field_instance_config = $field_config;
+				$field_instance_config['entity_type'] = 'file';
+				$field_instance_config['bundle'] = $bundle;
+				field_create_instance($field_instance_config);
+				watchdog('eatlas_branding', 'Field "'.$field_name.'" added to "'.$bundle.'".');
+			} else {
+				watchdog('eatlas_branding', 'Field "'.$field_name.'" is already setup for "'.$bundle.'".');
+			}
+		}
+	}
+}
+
+// The media types seems to be an invention of the Media module...
+// I can't find any API function to get that list, but the list is
+// not modifiable.
+function _eatlas_branding_get_media_types() {
+	return module_exists('media') ?
+		array(
+			'audio' => 'Audio',
+			'image' => 'Image',
+			'video' => 'Video',
+			'default' => 'Other'
+		) :
+		NULL;
+}
+
+
+/**
+ * Updates
+ * Implements: hook_update_N
+ *   https://api.drupal.org/api/drupal/modules%21system%21system.api.php/function/hook_update_N/7
+ *
+ * N = 7X00
+ *   7 = Drupal core 7.
+ *   X = Module major version.
+ *   00 = Sequential number, for all the updates on that major version.
+ *
+ * Comments for each updates functions are used by Drupal as update notes.
+ * $sandbox is used with long updates (to manage the progress bar)
+ *
+ * Developper note:
+ *   To rerun an update, set the Update status back to the previous update (or 0 to rerun all updates)
+ *   UPDATE system SET schema_version=0 WHERE name='eatlas_branding';
+ *     See: http://drupal.stackexchange.com/questions/42204/reseting-the-hook-update-n-status-of-a-module#42207
+ */
+
+/**
+ * Update the Database to store the branding Theme and Site name.
+ */
+function eatlas_branding_update_7100(&$sandbox) {
+	$schema = drupal_get_schema('eatlas_branding');
+	if (!db_field_exists('eatlas_branding', 'theme')) {
+		db_add_field('eatlas_branding', 'theme', $schema['fields']['theme']);
+	}
+	if (!db_field_exists('eatlas_branding', 'site_name')) {
+		db_add_field('eatlas_branding', 'site_name', $schema['fields']['site_name']);
+	}
+}
+
+/**
+ * Update the Database to store the branding site page filters.
+ */
+function eatlas_branding_update_7200(&$sandbox) {
+	$schema = drupal_get_schema('eatlas_branding');
+	if (!db_field_exists('eatlas_branding', 'pages')) {
+		db_add_field('eatlas_branding', 'pages', $schema['fields']['pages']);
+	}
+}
+
+/**
+ * Update the Database to store the branding association with GeoNetwork categories.
+ */
+function eatlas_branding_update_7201(&$sandbox) {
+	$schema = drupal_get_schema('eatlas_branding');
+	if (!db_field_exists('eatlas_branding', 'geonetwork_categories')) {
+		db_add_field('eatlas_branding', 'geonetwork_categories', $schema['fields']['geonetwork_categories']);
+	}
+}
+
+?>

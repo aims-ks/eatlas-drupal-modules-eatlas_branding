@@ -1,0 +1,12 @@
+; $Id$
+name = eAtlas Branding system pages filter
+description = This module filter out system pages that are not allowed for the branding, such as the contact page, views pages, etc. Disallowed contents result in 404 pages.
+core = 7.x
+
+files[] = eatlas_branding_system_pages_filter.module
+
+package = eAtlas
+
+dependencies[] = eatlas_branding
+
+; This is a sub-module, it does not need the attributes used by the update module.

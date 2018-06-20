@@ -1,0 +1,14 @@
+<?php
+
+/**
+ * Implements hook_install.
+ */
+function eatlas_branding_fields_install() {
+	// Update module weight, to run after media modules
+	//     https://www.drupal.org/node/110238
+	// Why it's not in .info file?
+	//     https://www.drupal.org/node/127641
+	db_query("UPDATE {system} SET weight = 20 WHERE type = 'module' AND name = 'eatlas_branding_fields'");
+}
+
+?>

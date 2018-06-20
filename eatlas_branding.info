@@ -1,0 +1,20 @@
+; $Id$
+name = eAtlas Branding
+description = This module add a branding capability, that can be used to show node with a different look depending on the context.<br/>NOTE: This module create a 'branding' vocabulary and some form fields which are NOT automatically deleted when the module is uninstalled.<br/>Documentation: <a href="http://drupal.eatlas.org.au/modules/eatlas/eatlas_branding/eatlas-branding-doc.html">http://drupal.eatlas.org.au/modules/eatlas/eatlas_branding/eatlas-branding-doc.html</a>
+core = 7.x
+
+files[] = eatlas_branding.module
+
+stylesheets[all][] = css/eatlas_branding.css
+
+package = eAtlas
+
+configure = admin/config/eatlas/eatlas_branding
+
+dependencies[] = eatlas_commons (>=1.4)
+
+; Attributes used by the update module.
+; There fields needs to be removed if the module is migrated to Drupal.org
+project status url = "http://drupal.eatlas.org.au/modules/eatlas"
+version = "7.x-2.9"
+project = "eatlas_branding"

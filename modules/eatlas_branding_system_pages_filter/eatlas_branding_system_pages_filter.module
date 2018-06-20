@@ -1,0 +1,135 @@
+<?php
+
+/**
+ * Implements hook_init().
+ * Return a "404 - Page not found" for unbranded pages not listed
+ * in the "Page filters" field for the current branding.
+ * Example:
+ *   If the contact page is not listed in the page filters of
+ *   Torres Strait branding, viewing the contact page from the
+ *   Torres Strait website would result in a page not found.
+ *
+ * NOTE: This hook is good for pages AND feeds (like /aggregator/rss).
+ *   It needs to be run after all "hook_init", to be sure the theme
+ *   blocks, CSS and JS are ready.
+ *   See: eatlas_branding_system_pages_filter.install
+ */
+function eatlas_branding_system_pages_filter_init() {
+	eatlas_branding_system_pages_filter_hide_pages();
+	//eatlas_branding_system_pages_filter_hide_pages_debug();
+}
+function eatlas_branding_system_pages_filter_hide_pages() {
+	if (!_eatlas_branding_system_pages_filter_page_is_allowed($_GET['q'])) {
+		drupal_not_found();
+		drupal_exit();
+	}
+}
+// This function does exactly the same as the previous function, with time monitoring.
+// I didn't used a "debug" parameter in the real function to avoid slowing the website
+// with an unnecessary "if".
+// To enable the debuging, change the call in the "hook_init" above.
+function eatlas_branding_system_pages_filter_hide_pages_debug() {
+	$requested_page = $_GET['q'];
+
+	$microtime_before = microtime(true);
+	$page_allowed = _eatlas_branding_system_pages_filter_page_is_allowed($requested_page);
+	$microtime_after = microtime(true);
+
+	drupal_set_message('eatlas_branding_system_pages_filter: Execution time for ' . $requested_page . ': ' .
+			number_format(($microtime_after - $microtime_before) * 1000, 3) . 'ms - ['.($page_allowed ? 'ALLOWED' : 'DENIED').']');
+
+	if (!$page_allowed) {
+		drupal_not_found();
+		drupal_exit();
+	}
+}
+
+/**
+ * Return TRUE if the $requested_page is allowed for the current
+ * branding. FALSE otherwise. Some pages are ALWAYS allowed,
+ * for obvious reasons.
+ *
+ * List of pages that are always allowed:
+ *   - 404 (page not found), 403 (access denied) and 500 (server error) implicitly allowed?
+ *   - All admin pages
+ *   - User pages (for login / logout)
+ *   - Auto-complete fields (using the "/<MODULE>/autocomplete/..." path)
+ *   - Uploaded files and derived images (sites/default/files)
+ *   - Folder renaming (path = "batch")
+ *   - Media module ajax requests (media/*)
+ *   - eAtlas Media frame filter - ajax requests (eatlas_mediaframe_fileinfo and eatlas_mediaframe_fileurl)
+ *   - Brandable pages (if they support the current branding)
+ */
+function _eatlas_branding_system_pages_filter_page_is_allowed($requested_page) {
+	$branding_id = eatlas_branding_get_branding_id();
+
+	// Find out if the page has branding fields
+	$entity_type = _eatlas_branding_get_page_entity_type();
+	if ($entity_type !== NULL) {
+		$entity = _eatlas_branding_get_page_entity($entity_type);
+
+		if ($entity &&
+				property_exists($entity, 'field_branding') &&
+				property_exists($entity, 'field_supported_brandings')) {
+
+			// Verify if the page support the current branding
+			$supported_brandings = eatlas_commons_get_entity_value($entity_type, $entity, EATLAS_BRANDING_FIELD_SUPPORTED_BRANDINGS);
+
+			if (empty($supported_brandings)) {
+				// The page is broken. Allow it to everyone so it can be fixed.
+				return TRUE;
+			}
+
+			foreach($supported_brandings as $supported_branding) {
+				if (property_exists($supported_branding, 'tid') && $supported_branding->tid === $branding_id) {
+					return TRUE;
+				}
+			}
+
+			return FALSE;
+		}
+	}
+
+	// Admin pages (to administer the website)
+	// and user pages (for login / logout)
+	if ($requested_page === 'batch' ||
+			eatlas_commons_starts_with($requested_page, 'admin/') ||
+			eatlas_commons_starts_with($requested_page, 'user/') ||
+			strpos($requested_page, '/autocomplete/') !== FALSE ||
+			eatlas_commons_starts_with($requested_page, 'node/') ||
+			eatlas_commons_starts_with($requested_page, 'media/') ||
+			eatlas_commons_starts_with($requested_page, 'system/ajax') ||
+			eatlas_commons_starts_with($requested_page, 'eatlas_mediaframe_fileinfo/') ||
+			eatlas_commons_starts_with($requested_page, 'eatlas_mediaframe_fileurl/') ||
+			eatlas_commons_starts_with($requested_page, 'sites/default/files/')) {
+		return TRUE;
+	}
+
+	// Filter according to the config list
+	$branding_values = eatlas_branding_branding_load($branding_id);
+	if (property_exists($branding_values, 'pages')) {
+		// Change the theme ONLY IF the choosen theme exists and is active
+		// NOTE: A theme may be deactivated / deleted after been selected for a branding.
+		$branding_pages = $branding_values->pages;
+		if (empty($branding_pages)) {
+			return FALSE;
+		}
+
+		foreach(preg_split('/[\r\n]+/', $branding_pages) as $branding_page) {
+			$branding_page = trim($branding_page);
+			if (!empty($branding_page) && !eatlas_commons_starts_with($branding_page, '#')) {
+				if ($branding_page === $requested_page) {
+					return TRUE;
+				}
+				$branding_page_pattern = str_replace('*', '.*', $branding_page);
+				if (preg_match("~^$branding_page_pattern$~", $requested_page)) {
+					return TRUE;
+				}
+			}
+		}
+	}
+
+	return FALSE;
+}
+
+?>

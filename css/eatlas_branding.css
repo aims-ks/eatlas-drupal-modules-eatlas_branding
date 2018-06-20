@@ -1,0 +1,27 @@
+/* Contact form - Hide the "Category" field. It just add confusion. */
+#contact-site-form .form-item-cid {
+	display: none;
+}
+
+/* Branding admin form */
+div.pages_list table {
+	margin: 0;
+	/* To allow "overflow: hidden" to work */
+	table-layout:fixed;
+}
+div.pages_list table td {
+	vertical-align: top;
+	overflow: auto;
+}
+div.pages_list table .url {
+	width: 50%;
+}
+div.pages_list div.pages_list_content {
+	height: 300px;
+	border-bottom: 1px solid #bebfb9;
+	overflow: auto;
+}
+div.pages_list div.pages_list_content table {
+	border-top: none;
+	border-bottom: none;
+}

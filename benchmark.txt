@@ -1,0 +1,88 @@
+Benchmark:
+Loading a view containing 300 links - loaded using "Empty cache and hard reload" from the browser every time (no browser cache)
+	Without
+		Right after Drupal cleared cache
+			2.42562819 sec.
+			2.38138604 sec.
+			2.32589698 sec.
+		Drupal cached
+			0.32840490 sec.
+			0.32311583 sec.
+			0.41693807 sec.
+
+	With (node_load)
+		Right after Drupal cleared cache
+			32.34258604 sec.
+			32.48494506 sec.
+			32.75630808 sec.
+		Drupal cached
+			1.60939002 sec.
+			1.16886210 sec.
+			1.05612206 sec.
+
+	With (EntityFieldQuery)
+		Right after Drupal cleared cache
+			7.78006816 sec.
+			7.28663301 sec.
+			7.28229403 sec.
+		Drupal cached
+			4.17229199 sec.
+			3.69510293 sec.
+			3.59971905 sec.
+
+NOTE:
+In order to get the readings, I hacked the module views:
+
+function views_page($name, $display_id) {
+  $__starts = microtime(true);
+  $args = func_get_args();
+  // Remove $name and $display_id from the arguments.
+  array_shift($args);
+  array_shift($args);
+
+  // Load the view and render it.
+  if ($view = views_get_view($name)) {
+    $output = $view->execute_display($display_id, $args);
+    $__time = number_format(microtime(true) - $__starts, 8);
+    print "Execution time: $__time sec.";
+    return $output;
+  }
+
+  // Fallback; if we get here no view was found or handler was not valid.
+  return MENU_NOT_FOUND;
+}
+
+
+NOTE:
+EntityFieldQuery is supposed to be much more efficient, but it still
+load the body and other default fields that I don't need, and it has to
+filter out the custom fields I don't need when loading the node from
+the cache. Also, I can't find out how to get the "book" field for book
+nodes. Overall, "node_load" is better. The initialisation time is the
+worst but the normal load time is 3 times faster than "EntityFieldQuery".
+
+function _eatlas_branding_load_node_array_from_id($nid) {
+	$query = new EntityFieldQuery();
+	$query->entityCondition('entity_type', 'node')
+		->propertyCondition('nid', $nid);
+	$result = $query->execute();
+
+	if (isset($result['node'][$nid])) {
+		$raw_node = $result['node'];
+
+		// Load the field ID
+		$field_branding_info = field_info_field(EATLAS_BRANDING_FIELD_BRANDING);
+		if (isset($field_branding_info['id'])) {
+			// Attach a field to get value for it
+			field_attach_load('node', $raw_node, FIELD_LOAD_CURRENT, array('field_id' => $field_branding_info['id']));
+		}
+
+		$field_supported_brandings_info = field_info_field(EATLAS_BRANDING_FIELD_SUPPORTED_BRANDINGS);
+		if (isset($field_supported_brandings_info['id'])) {
+			field_attach_load('node', $raw_node, FIELD_LOAD_CURRENT, array('field_id' => $field_supported_brandings_info['id']));
+		}
+
+		return __eatlas_branding_obj_to_array($raw_node[$nid]);
+	}
+	return NULL;
+}
