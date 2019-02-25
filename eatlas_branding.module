@@ -367,7 +367,8 @@ function _eatlas_branding_get_absolute_url($default_branding_id, $uri = NULL) {
             $uri = $_SERVER['REQUEST_URI'];
         }
 
-        return "http://${branding_host}${uri}";
+        $ssl = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on');
+        return ($ssl ? "https" : "http") . "://${branding_host}${uri}";
     }
 
     return NULL;

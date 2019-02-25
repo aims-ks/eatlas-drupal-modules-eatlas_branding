@@ -9,5 +9,4 @@ creator = Gael Lafond
 ;   This variable is an array, one cell per element. Use "\n" for new lines.
 ;   Those properties are used with release_notes and tags.
 ;   See: https://www.drupal.org/documentation/releases/types
-Bug fixes[] = Fixes canonical link not overwritten when current node is not branded.
-Bug fixes[] = Added query parameters to canonical links.
+Bug fixes[] = Fixes canonical link HTTPS protocol when page requested over HTTPS.
