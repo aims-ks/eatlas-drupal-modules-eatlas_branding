@@ -23,31 +23,31 @@ define('EATLAS_BRANDING_DEFAULT_BRANDING_ID', '73');
  * Module configuration
  */
 function eatlas_branding_menu() {
-	$items = array();
+    $items = array();
 
-	// NOTE: admin/config/eatlas is defined in "eatlas_commons"
+    // NOTE: admin/config/eatlas is defined in "eatlas_commons"
 
-	// Overview
-	// List all brandings
-	$items['admin/config/eatlas/eatlas_branding'] = array(
-		'title' => 'Branding settings',
-		'description' => 'eAtlas branding module settings',
-		'page callback' => '_eatlas_branding_overview',
-		'access arguments' => array('access administration pages'),
-		'file' => 'eatlas_branding.admin.inc',
-	);
-	// Edit one branding
-	$items['admin/config/eatlas/eatlas_branding/%taxonomy_term'] = array(
-		'title callback' => '_eatlas_branding_title',
-		'title arguments' => array(4),
-		'description' => 'Edit eAtlas branding module settings',
-		'page callback' => 'drupal_get_form',
-		'page arguments' => array('_eatlas_branding_admin', 4),
-		'access arguments' => array('access administration pages'),
-		'file' => 'eatlas_branding.admin.inc',
-	);
+    // Overview
+    // List all brandings
+    $items['admin/config/eatlas/eatlas_branding'] = array(
+        'title' => 'Branding settings',
+        'description' => 'eAtlas branding module settings',
+        'page callback' => '_eatlas_branding_overview',
+        'access arguments' => array('access administration pages'),
+        'file' => 'eatlas_branding.admin.inc',
+    );
+    // Edit one branding
+    $items['admin/config/eatlas/eatlas_branding/%taxonomy_term'] = array(
+        'title callback' => '_eatlas_branding_title',
+        'title arguments' => array(4),
+        'description' => 'Edit eAtlas branding module settings',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('_eatlas_branding_admin', 4),
+        'access arguments' => array('access administration pages'),
+        'file' => 'eatlas_branding.admin.inc',
+    );
 
-	return $items;
+    return $items;
 }
 
 /**
@@ -55,13 +55,13 @@ function eatlas_branding_menu() {
  * Return NULL if no branding matches.
  */
 function eatlas_branding_get_branding_id($url = NULL) {
-	if ($url === NULL) {
-		$url = $GLOBALS['base_url'];
-	}
-	$url_parts = parse_url($url);
-	$url_host = isset($url_parts['host']) ? $url_parts['host'] : NULL;
-	$url_port = isset($url_parts['port']) ? $url_parts['port'] : NULL;
-	return eatlas_branding_get_branding_id_from_host($url_host, $url_port);
+    if ($url === NULL) {
+        $url = $GLOBALS['base_url'];
+    }
+    $url_parts = parse_url($url);
+    $url_host = isset($url_parts['host']) ? $url_parts['host'] : NULL;
+    $url_port = isset($url_parts['port']) ? $url_parts['port'] : NULL;
+    return eatlas_branding_get_branding_id_from_host($url_host, $url_port);
 }
 
 /**
@@ -69,26 +69,26 @@ function eatlas_branding_get_branding_id($url = NULL) {
  * Return NULL if no branding matches.
  */
 function eatlas_branding_get_branding_id_from_host($host, $port = NULL) {
-	if ($host === NULL) {
-		return NULL;
-	}
-	// DB Select using the Drupal objects
-	$query = db_select('eatlas_branding', 'b')->fields('b');
-	if ($port !== NULL) {
-		$or = db_or();
-		$or->condition('b.host', "$host", '=');
-		$or->condition('b.host', "$host:$port", '=');
-		$query->condition($or);
-	} else {
-		$query->condition('b.host', "$host", '=');
-	}
-	$data = $query->execute()->fetch();
+    if ($host === NULL) {
+        return NULL;
+    }
+    // DB Select using the Drupal objects
+    $query = db_select('eatlas_branding', 'b')->fields('b');
+    if ($port !== NULL) {
+        $or = db_or();
+        $or->condition('b.host', "$host", '=');
+        $or->condition('b.host', "$host:$port", '=');
+        $query->condition($or);
+    } else {
+        $query->condition('b.host', "$host", '=');
+    }
+    $data = $query->execute()->fetch();
 
-	if (!empty($data) && property_exists($data, 'tid')) {
-		return $data->tid;
-	}
+    if (!empty($data) && property_exists($data, 'tid')) {
+        return $data->tid;
+    }
 
-	return NULL;
+    return NULL;
 }
 
 /**
@@ -97,22 +97,22 @@ function eatlas_branding_get_branding_id_from_host($host, $port = NULL) {
  * Return NULL if no branding matches.
  */
 function eatlas_branding_get_branding_id_from_name($branding) {
-	if (!$branding) {
-		return NULL;
-	}
-	$branding_vocabulary = taxonomy_vocabulary_machine_name_load(EATLAS_BRANDING_VOCABULARY);
-	if ($branding_vocabulary === NULL) {
-		watchdog('eatlas_branding', 'WARNING: ' . EATLAS_BRANDING_VOCABULARY . ' vocabulary missing!', array(), WATCHDOG_WARNING);
-		return NULL;
-	}
-	// Load all terms for that vocabulary
-	$terms = taxonomy_term_load_multiple(array(), array('vid' => $branding_vocabulary->vid));
-	foreach($terms as $term) {
-		if (taxonomy_term_title($term) === $branding) {
-			return $term->tid;
-		}
-	}
-	return NULL;
+    if (!$branding) {
+        return NULL;
+    }
+    $branding_vocabulary = taxonomy_vocabulary_machine_name_load(EATLAS_BRANDING_VOCABULARY);
+    if ($branding_vocabulary === NULL) {
+        watchdog('eatlas_branding', 'WARNING: ' . EATLAS_BRANDING_VOCABULARY . ' vocabulary missing!', array(), WATCHDOG_WARNING);
+        return NULL;
+    }
+    // Load all terms for that vocabulary
+    $terms = taxonomy_term_load_multiple(array(), array('vid' => $branding_vocabulary->vid));
+    foreach($terms as $term) {
+        if (taxonomy_term_title($term) === $branding) {
+            return $term->tid;
+        }
+    }
+    return NULL;
 }
 
 /**
@@ -121,45 +121,45 @@ function eatlas_branding_get_branding_id_from_name($branding) {
  * https://api.drupal.org/api/drupal/modules%21node%21node.module/function/node_load/7
  */
 function eatlas_branding_branding_load($branding_id) {
-	if ($branding_id === NULL) {
-		return new stdClass();
-	}
+    if ($branding_id === NULL) {
+        return new stdClass();
+    }
 
-	// DB Select using the Drupal objects
-	// https://api.drupal.org/api/drupal/includes!database!database.inc/function/db_select/7
-	// NOTE: Join do not return a query!
-	//     https://api.drupal.org/api/drupal/includes%21database%21select.inc/function/SelectQuery%3A%3Ajoin/7
+    // DB Select using the Drupal objects
+    // https://api.drupal.org/api/drupal/includes!database!database.inc/function/db_select/7
+    // NOTE: Join do not return a query!
+    //     https://api.drupal.org/api/drupal/includes%21database%21select.inc/function/SelectQuery%3A%3Ajoin/7
 
-	// DB Select to get the branding policy
-	$query = db_select('eatlas_branding', 'b')
-		->fields('b')
-		->condition('b.tid', $branding_id, '=');
-	$query->join('eatlas_branding_policy', 'bp', 'b.tid = bp.tid');
-	$query->fields('bp',array('pid'));
-	$result = $query->execute();
+    // DB Select to get the branding policy
+    $query = db_select('eatlas_branding', 'b')
+        ->fields('b')
+        ->condition('b.tid', $branding_id, '=');
+    $query->join('eatlas_branding_policy', 'bp', 'b.tid = bp.tid');
+    $query->fields('bp',array('pid'));
+    $result = $query->execute();
 
-	$data = $result->fetch();
+    $data = $result->fetch();
 
-	if (!$data) {
-		return new stdClass();
-	}
+    if (!$data) {
+        return new stdClass();
+    }
 
-	// Set policy IDs (pid) as an array of ID instead of having a
-	// duplicated record for each pid.
-	if ($data && property_exists($data, 'pid') && !empty($data->pid)) {
-		$pid = $data->pid;
-		$data->pid = array($pid);
-		while($record = $result->fetch()) {
-			$data->pid[] = $record->pid;
-		}
-	} else {
-		$data->pid = array();
-	}
+    // Set policy IDs (pid) as an array of ID instead of having a
+    // duplicated record for each pid.
+    if ($data && property_exists($data, 'pid') && !empty($data->pid)) {
+        $pid = $data->pid;
+        $data->pid = array($pid);
+        while($record = $result->fetch()) {
+            $data->pid[] = $record->pid;
+        }
+    } else {
+        $data->pid = array();
+    }
 
-	// Also load the taxonomy term associated with this branding
-	$data->term = taxonomy_term_load($branding_id);
+    // Also load the taxonomy term associated with this branding
+    $data->term = taxonomy_term_load($branding_id);
 
-	return $data;
+    return $data;
 }
 
 /**
@@ -168,46 +168,46 @@ function eatlas_branding_branding_load($branding_id) {
  * https://api.drupal.org/api/drupal/modules%21node%21node.module/function/node_save/7
  */
 function eatlas_branding_branding_save($branding) {
-	// Transform the branding object as an Array to be sent to the DB.
-	$branding_fields = (array)$branding;
+    // Transform the branding object as an Array to be sent to the DB.
+    $branding_fields = (array)$branding;
 
-	// Remove values that should not be save directly.
-	// The term is set in the branding object as reference only, it should not be saved in the DB.
-	unset($branding_fields['term']);
-	// PID is treated separately.
-	unset($branding_fields['pid']);
+    // Remove values that should not be save directly.
+    // The term is set in the branding object as reference only, it should not be saved in the DB.
+    unset($branding_fields['term']);
+    // PID is treated separately.
+    unset($branding_fields['pid']);
 
-	if ($branding && property_exists($branding, 'tid')) {
-		$exists = db_query('SELECT 1 FROM {eatlas_branding} WHERE tid = :tid', array(':tid' => $branding->tid))->fetchField();
+    if ($branding && property_exists($branding, 'tid')) {
+        $exists = db_query('SELECT 1 FROM {eatlas_branding} WHERE tid = :tid', array(':tid' => $branding->tid))->fetchField();
 
-		$tid = $branding->tid;
-		if ($exists === FALSE) {
-			// Insert
-			// https://api.drupal.org/api/drupal/includes%21database%21query.inc/function/InsertQuery%3A%3Aexecute/7
-			db_insert('eatlas_branding')->fields($branding_fields)->execute();
-		} else {
-			// TID is used in the "WHERE" clause, not in the values.
-			unset($branding_fields['tid']);
+        $tid = $branding->tid;
+        if ($exists === FALSE) {
+            // Insert
+            // https://api.drupal.org/api/drupal/includes%21database%21query.inc/function/InsertQuery%3A%3Aexecute/7
+            db_insert('eatlas_branding')->fields($branding_fields)->execute();
+        } else {
+            // TID is used in the "WHERE" clause, not in the values.
+            unset($branding_fields['tid']);
 
-			// Update
-			db_update('eatlas_branding')->fields($branding_fields)->condition('tid', $tid)->execute();
-		}
+            // Update
+            db_update('eatlas_branding')->fields($branding_fields)->condition('tid', $tid)->execute();
+        }
 
-		if ($tid !== NULL) {
-			// Remove all branding policies before inserting the new one (that's just easier that way)
-			db_delete('eatlas_branding_policy')->condition('tid', $tid)->execute();
+        if ($tid !== NULL) {
+            // Remove all branding policies before inserting the new one (that's just easier that way)
+            db_delete('eatlas_branding_policy')->condition('tid', $tid)->execute();
 
-			// Insert policy data
-			if (property_exists($branding, 'pid')) {
-				foreach($branding->pid as $pid) {
-					db_insert('eatlas_branding_policy')->fields(array(
-						'tid' => $tid,
-						'pid' => $pid
-					))->execute();
-				}
-			}
-		}
-	}
+            // Insert policy data
+            if (property_exists($branding, 'pid')) {
+                foreach($branding->pid as $pid) {
+                    db_insert('eatlas_branding_policy')->fields(array(
+                        'tid' => $tid,
+                        'pid' => $pid
+                    ))->execute();
+                }
+            }
+        }
+    }
 }
 
 
@@ -223,54 +223,54 @@ function eatlas_branding_branding_save($branding) {
  * https://api.drupal.org/api/drupal/modules%21system%21system.api.php/function/hook_url_outbound_alter/7
  */
 function eatlas_branding_url_outbound_alter(&$path, &$options, $original_path) {
-	$entity_type = _eatlas_branding_get_page_entity_type($path);
-	if ($entity_type !== NULL) {
-		$entity = _eatlas_branding_get_page_entity($entity_type, $path);
+    $entity_type = _eatlas_branding_get_page_entity_type($path);
+    if ($entity_type !== NULL) {
+        $entity = _eatlas_branding_get_page_entity($entity_type, $path);
 
-		if ($entity &&
-				property_exists($entity, EATLAS_BRANDING_FIELD_BRANDING) &&
-				property_exists($entity, EATLAS_BRANDING_FIELD_SUPPORTED_BRANDINGS)) {
-			// Get the branding associated with the URL of the current page
+        if ($entity &&
+                property_exists($entity, EATLAS_BRANDING_FIELD_BRANDING) &&
+                property_exists($entity, EATLAS_BRANDING_FIELD_SUPPORTED_BRANDINGS)) {
+            // Get the branding associated with the URL of the current page
 
-			$current_branding_id = eatlas_branding_get_branding_id();
+            $current_branding_id = eatlas_branding_get_branding_id();
 
-			// Verify if the page support the current branding
-			$current_branding_is_valid = FALSE;
-			$link_supported_branding_terms = eatlas_commons_get_entity_value($entity_type, $entity, EATLAS_BRANDING_FIELD_SUPPORTED_BRANDINGS);
-			if (!empty($link_supported_branding_terms)) {
-				foreach($link_supported_branding_terms as $link_supported_branding_term) {
-					if ($link_supported_branding_term && gettype($link_supported_branding_term) === 'object' &&
-							property_exists($link_supported_branding_term, 'tid') &&
-							$link_supported_branding_term->tid === $current_branding_id) {
-						$current_branding_is_valid = TRUE;
-					}
-				}
-			}
+            // Verify if the page support the current branding
+            $current_branding_is_valid = FALSE;
+            $link_supported_branding_terms = eatlas_commons_get_entity_value($entity_type, $entity, EATLAS_BRANDING_FIELD_SUPPORTED_BRANDINGS);
+            if (!empty($link_supported_branding_terms)) {
+                foreach($link_supported_branding_terms as $link_supported_branding_term) {
+                    if ($link_supported_branding_term && gettype($link_supported_branding_term) === 'object' &&
+                            property_exists($link_supported_branding_term, 'tid') &&
+                            $link_supported_branding_term->tid === $current_branding_id) {
+                        $current_branding_is_valid = TRUE;
+                    }
+                }
+            }
 
-			if (!$current_branding_is_valid) {
-				$link_default_branding_term = eatlas_commons_get_entity_value($entity_type, $entity, EATLAS_BRANDING_FIELD_BRANDING);
-				if (!empty($link_default_branding_term)) {
-					if (property_exists($link_default_branding_term, 'tid') && $link_default_branding_term->tid) {
-						$link_default_branding = eatlas_branding_branding_load($link_default_branding_term->tid);
-						if ($link_default_branding &&
-								property_exists($link_default_branding, 'host') &&
-								!empty($link_default_branding->host)) {
-							// Change the relative URL with an absolute URL which
-							// switch to the right branding.
-							// NOTE: Starting the URL with "//" let the browser choose
-							//     to use "http" or "https" depending of the protocol
-							//     of the current page.
-							// Since the path is now considered "external", Drupal
-							// won't automatically replace the link with an alias.
-							// I have to do it manually.
-							$path = '//' . $link_default_branding->host . '/' . drupal_get_path_alias($path); 
-							$options['external'] = TRUE;
-						}
-					}
-				}
-			}
-		}
-	}
+            if (!$current_branding_is_valid) {
+                $link_default_branding_term = eatlas_commons_get_entity_value($entity_type, $entity, EATLAS_BRANDING_FIELD_BRANDING);
+                if (!empty($link_default_branding_term)) {
+                    if (property_exists($link_default_branding_term, 'tid') && $link_default_branding_term->tid) {
+                        $link_default_branding = eatlas_branding_branding_load($link_default_branding_term->tid);
+                        if ($link_default_branding &&
+                                property_exists($link_default_branding, 'host') &&
+                                !empty($link_default_branding->host)) {
+                            // Change the relative URL with an absolute URL which
+                            // switch to the right branding.
+                            // NOTE: Starting the URL with "//" let the browser choose
+                            //     to use "http" or "https" depending of the protocol
+                            //     of the current page.
+                            // Since the path is now considered "external", Drupal
+                            // won't automatically replace the link with an alias.
+                            // I have to do it manually.
+                            $path = '//' . $link_default_branding->host . '/' . drupal_get_path_alias($path);
+                            $options['external'] = TRUE;
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 /**
@@ -281,29 +281,61 @@ function eatlas_branding_url_outbound_alter(&$path, &$options, $original_path) {
  *     https://www.drupal.org/node/1104828#comment-7518145
  */
 function eatlas_branding_html_head_alter(&$head_elements) {
-	// Load the default branding ID for the current node (or file)
-	$entity_type = _eatlas_branding_get_page_entity_type();
-	$entity = _eatlas_branding_get_page_entity($entity_type);
-	if ($entity) {
-		$default_branding_term = eatlas_commons_get_entity_value($entity_type, $entity, EATLAS_BRANDING_FIELD_BRANDING);
-		if ($default_branding_term) {
-			// Get our current uri.
-			$uri = drupal_get_path_alias();
-			$canonical_url = _eatlas_branding_get_absolute_url($default_branding_term->tid, $uri);
-			if ($canonical_url) {
-				// We try to match it by forming the right key with the info we have.
-				$key = 'drupal_add_html_head_link:canonical:</' . $uri . '>;';
+    // Load the default branding ID for the current node (or file)
+    $entity_type = _eatlas_branding_get_page_entity_type();
+    $entity = _eatlas_branding_get_page_entity($entity_type);
 
-				// Check that it is set, then we re-set it to the correct full url.
-				if (isset($head_elements[$key])) {
-					// Alter our head_element.
-					// NOTE: URL must be absolute
-					//   See: http://googlewebmastercentral.blogspot.com.au/2013/04/5-common-mistakes-with-relcanonical.html
-					$head_elements[$key]['#attributes']['href'] = $canonical_url;
-				}
-			}
-		}
-	}
+    // Get our current uri.
+    $uri = drupal_get_path_alias();
+    // We try to match it by forming the right key with the info we have.
+    $key = 'drupal_add_html_head_link:canonical:</' . $uri . '>;';
+
+    // Check that it is set, then we re-set it to the correct full url.
+    if (isset($head_elements[$key])) {
+        $canonical_fixed = FALSE;
+        if ($entity) {
+            $default_branding_term = eatlas_commons_get_entity_value($entity_type, $entity, EATLAS_BRANDING_FIELD_BRANDING);
+            if ($default_branding_term) {
+                $canonical_url = _eatlas_branding_get_absolute_url($default_branding_term->tid);
+                if ($canonical_url) {
+                    // Alter our head_element.
+                    // NOTE: URL must be absolute
+                    //   See: http://googlewebmastercentral.blogspot.com.au/2013/04/5-common-mistakes-with-relcanonical.html
+                    $head_elements[$key]['#attributes']['href'] = $canonical_url;
+                    $canonical_fixed = TRUE;
+                }
+            }
+        }
+
+        if (!$canonical_fixed) {
+            $absolute_url = eatlas_branding_get_absolute_url();
+            if ($absolute_url) {
+                $head_elements[$key]['#attributes']['href'] = $absolute_url;
+                $canonical_fixed = TRUE;
+            }
+        }
+
+        if (!$canonical_fixed) {
+            unset($head_elements[$key]);
+        }
+    }
+}
+
+// Inspired from: https://stackoverflow.com/questions/6768793/get-the-full-url-in-php#answer-8891890
+function eatlas_branding_get_absolute_url($use_forwarded_host = FALSE) {
+    return eatlas_branding_get_host_url($use_forwarded_host) . $_SERVER['REQUEST_URI'];
+}
+function eatlas_branding_get_host_url($use_forwarded_host = FALSE) {
+    $ssl      = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on');
+    $sp       = strtolower($_SERVER['SERVER_PROTOCOL']);
+    $protocol = substr($sp, 0, strpos($sp, '/')) . ($ssl ? 's' : '');
+    $port     = $_SERVER['SERVER_PORT'];
+    $port     = ((!$ssl && $port=='80') || ($ssl && $port=='443')) ? '' : ':' . $port;
+    $host     = ($use_forwarded_host && isset($_SERVER['HTTP_X_FORWARDED_HOST'])) ?
+                    $_SERVER['HTTP_X_FORWARDED_HOST'] :
+                    (isset($s['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : null);
+    $host     = isset($host) ? $host : $_SERVER['SERVER_NAME'] . $port;
+    return $protocol . '://' . $host;
 }
 
 /**
@@ -320,25 +352,25 @@ function eatlas_branding_html_head_alter(&$head_elements) {
  *     URI: /search/eatlas?q=true
  */
 function _eatlas_branding_get_absolute_url($default_branding_id, $uri = NULL) {
-	if ($default_branding_id === NULL) {
-		return NULL;
-	}
+    if ($default_branding_id === NULL) {
+        return NULL;
+    }
 
-	$branding_values = eatlas_branding_branding_load($default_branding_id);
-	if ($branding_values &&
-			property_exists($branding_values, 'host') &&
-			!empty($branding_values->host)) {
-		$branding_host = $branding_values->host;
+    $branding_values = eatlas_branding_branding_load($default_branding_id);
+    if ($branding_values &&
+            property_exists($branding_values, 'host') &&
+            !empty($branding_values->host)) {
+        $branding_host = $branding_values->host;
 
-		// Get our current uri.
-		if ($uri === NULL) {
-			$uri = drupal_get_path_alias();
-		}
+        // Get our current uri.
+        if ($uri === NULL) {
+            $uri = $_SERVER['REQUEST_URI'];
+        }
 
-		return "http://${branding_host}/${uri}";
-	}
+        return "http://${branding_host}${uri}";
+    }
 
-	return NULL;
+    return NULL;
 }
 
 
@@ -348,19 +380,19 @@ function _eatlas_branding_get_absolute_url($default_branding_id, $uri = NULL) {
  * The entity type is either "node", "media", "taxonomy", "user", etc.
  */
 function _eatlas_branding_get_page_entity_type($path = NULL) {
-	// https://api.drupal.org/api/drupal/includes%21bootstrap.inc/function/arg/7
-	$entity_type = arg(0, $path);
-	if ($entity_type === 'media') {
-		$entity_type = 'file';
-	}
-	return (entity_get_info($entity_type) === NULL ? NULL : $entity_type);
+    // https://api.drupal.org/api/drupal/includes%21bootstrap.inc/function/arg/7
+    $entity_type = arg(0, $path);
+    if ($entity_type === 'media') {
+        $entity_type = 'file';
+    }
+    return (entity_get_info($entity_type) === NULL ? NULL : $entity_type);
 }
 function _eatlas_branding_get_page_entity($entity_type, $path = NULL) {
-	if ($entity_type == NULL) {
-		return NULL;
-	}
-	// https://api.drupal.org/api/drupal/includes%21menu.inc/function/menu_get_object/7
-	return menu_get_object($entity_type, 1, $path);
+    if ($entity_type == NULL) {
+        return NULL;
+    }
+    // https://api.drupal.org/api/drupal/includes%21menu.inc/function/menu_get_object/7
+    return menu_get_object($entity_type, 1, $path);
 }
 
 /**
@@ -368,22 +400,22 @@ function _eatlas_branding_get_page_entity($entity_type, $path = NULL) {
  * Change the theme according to the branding options.
  */
 function eatlas_branding_custom_theme() {
-	$branding_id = eatlas_branding_get_branding_id();
-	$branding_values = eatlas_branding_branding_load($branding_id);
+    $branding_id = eatlas_branding_get_branding_id();
+    $branding_values = eatlas_branding_branding_load($branding_id);
 
-	if ($branding_values && property_exists($branding_values, 'theme')) {
-		// Change the theme ONLY IF the choosen theme exists and is active
-		// NOTE: A theme may be deactivated / deleted after been selected for a branding.
-		$branding_theme = $branding_values->theme;
-		$all_themes = list_themes();
-		if (!empty($branding_theme) && isset($all_themes[$branding_theme])) {
-			$branding_theme_obj = $all_themes[$branding_theme];
-			// If the theme for the branding is active
-			if ($branding_theme_obj->status) {
-				return $branding_theme;
-			}
-		}
-	}
+    if ($branding_values && property_exists($branding_values, 'theme')) {
+        // Change the theme ONLY IF the choosen theme exists and is active
+        // NOTE: A theme may be deactivated / deleted after been selected for a branding.
+        $branding_theme = $branding_values->theme;
+        $all_themes = list_themes();
+        if (!empty($branding_theme) && isset($all_themes[$branding_theme])) {
+            $branding_theme_obj = $all_themes[$branding_theme];
+            // If the theme for the branding is active
+            if ($branding_theme_obj->status) {
+                return $branding_theme;
+            }
+        }
+    }
 }
 
 /**
@@ -396,35 +428,35 @@ function eatlas_branding_custom_theme() {
  *   variable_set('site_name', 'eReefs');
  */
 function eatlas_branding_preprocess_html(&$variables) {
-	// NOTE: The function "template_preprocess_html" in "includes/theme.inc"
-	//   use the "site_name" variable to create the "head_title". At this
-	//   point (in "hook_preprocess_html"), it's too late to modify the
-	//   "site_name" variable, and setting it in the "hook_preprocess_page"
-	//   function would not work because "template_preprocess_html" is using
-	//   "variable_get" to get the value from the DB instead of the value
-	//   set in the variables array.
-	//   It's easier to modify the 'head_title_array' and 'head_title'
-	//   variables here instead.
-	if (!theme_get_setting('toggle_name')) {
-		// NOTE: The function "template_preprocess_html" in "includes/theme.inc"
-		//   do NOT check for "toggle_name" (probably a bug). The following line
-		//   fix that bug.
-		unset($variables['head_title_array']['name']);
-	} else {
-		$branding_site_name = '';
+    // NOTE: The function "template_preprocess_html" in "includes/theme.inc"
+    //   use the "site_name" variable to create the "head_title". At this
+    //   point (in "hook_preprocess_html"), it's too late to modify the
+    //   "site_name" variable, and setting it in the "hook_preprocess_page"
+    //   function would not work because "template_preprocess_html" is using
+    //   "variable_get" to get the value from the DB instead of the value
+    //   set in the variables array.
+    //   It's easier to modify the 'head_title_array' and 'head_title'
+    //   variables here instead.
+    if (!theme_get_setting('toggle_name')) {
+        // NOTE: The function "template_preprocess_html" in "includes/theme.inc"
+        //   do NOT check for "toggle_name" (probably a bug). The following line
+        //   fix that bug.
+        unset($variables['head_title_array']['name']);
+    } else {
+        $branding_site_name = '';
 
-		$branding_id = eatlas_branding_get_branding_id();
-		$branding_values = eatlas_branding_branding_load($branding_id);
-		if ($branding_values && property_exists($branding_values, 'site_name')) {
-			$branding_site_name = $branding_values->site_name;
-		}
+        $branding_id = eatlas_branding_get_branding_id();
+        $branding_values = eatlas_branding_branding_load($branding_id);
+        if ($branding_values && property_exists($branding_values, 'site_name')) {
+            $branding_site_name = $branding_values->site_name;
+        }
 
-		if (!empty($branding_site_name)) {
-			$variables['head_title_array']['name'] = $branding_site_name;
-		}
-	}
+        if (!empty($branding_site_name)) {
+            $variables['head_title_array']['name'] = $branding_site_name;
+        }
+    }
 
-	$variables['head_title'] = implode(' | ', $variables['head_title_array']);
+    $variables['head_title'] = implode(' | ', $variables['head_title_array']);
 }
 
 
@@ -434,12 +466,12 @@ function eatlas_branding_preprocess_html(&$variables) {
  * the proper email address for current branding.
  */
 function eatlas_branding_form_contact_site_form_alter(&$form, &$form_state) {
-	$branding_id = eatlas_branding_get_branding_id();
-	$branding_values = eatlas_branding_branding_load($branding_id);
-	if ($branding_values && property_exists($branding_values, 'cid') && $branding_values->cid) {
-		// Set the contact ID in the form
-		$form['cid']['#default_value'] = $branding_values->cid;
-	}
+    $branding_id = eatlas_branding_get_branding_id();
+    $branding_values = eatlas_branding_branding_load($branding_id);
+    if ($branding_values && property_exists($branding_values, 'cid') && $branding_values->cid) {
+        // Set the contact ID in the form
+        $form['cid']['#default_value'] = $branding_values->cid;
+    }
 }
 
 /**
@@ -448,10 +480,10 @@ function eatlas_branding_form_contact_site_form_alter(&$form, &$form_state) {
  * Fix the contact form to work with Amazon SMTP service (SES).
  */
 function eatlas_branding_mail_alter(&$message) {
-	// Set the "From" to the email address registered with Amazon SES (otherwise Amazon will refuse to send the email)
-	$from = 'e-atlas@aims.gov.au';
-	$message['from'] = $from;
-	$message['headers']['From'] = $from;
+    // Set the "From" to the email address registered with Amazon SES (otherwise Amazon will refuse to send the email)
+    $from = 'e-atlas@aims.gov.au';
+    $message['from'] = $from;
+    $message['headers']['From'] = $from;
 }
 
 /**
@@ -461,11 +493,11 @@ function eatlas_branding_mail_alter(&$message) {
  *   the tested fields ("field_branding" and "field_supported_brandings").
  */
 function eatlas_branding_form_alter(&$form, &$form_state, $form_id) {
-	eatlas_branding_set_branding_default_values($form);
-	// The branding field are added after this method is executed,
-	// so it's better to always add the validator. The validator
-	// check for the existance of the fields before valiting the values.
-	$form['#validate'][] = '_eatlas_branding_form_validate';
+    eatlas_branding_set_branding_default_values($form);
+    // The branding field are added after this method is executed,
+    // so it's better to always add the validator. The validator
+    // check for the existance of the fields before valiting the values.
+    $form['#validate'][] = '_eatlas_branding_form_validate';
 }
 
 /**
@@ -473,27 +505,27 @@ function eatlas_branding_form_alter(&$form, &$form_state, $form_id) {
  * according to the branding policy set in the branding configuration.
  */
 function eatlas_branding_set_branding_default_values(&$form) {
-	if (isset($form[EATLAS_BRANDING_FIELD_BRANDING]) || isset($form[EATLAS_BRANDING_FIELD_SUPPORTED_BRANDINGS])) {
-		if (eatlas_commons_get_form_operation($form) === 'create') {
-			// Set branding default value to the current branding
-			$branding_id = eatlas_branding_get_branding_id();
-			$branding_values = eatlas_branding_branding_load($branding_id);
-			if ($branding_values) {
-				if (property_exists($branding_values, 'tid')) {
-					// EATLAS_BRANDING_FIELD_BRANDING = Branding of current page
-					if (isset($form[EATLAS_BRANDING_FIELD_BRANDING])) {
-						eatlas_commons_set_form_default_value($form, EATLAS_BRANDING_FIELD_BRANDING, $branding_values->tid);
-					}
-				}
-				if (property_exists($branding_values, 'pid')) {
-					// EATLAS_BRANDING_FIELD_SUPPORTED_BRANDINGS = Branding policy for "EATLAS_BRANDING_FIELD_BRANDING" value
-					if (isset($form[EATLAS_BRANDING_FIELD_SUPPORTED_BRANDINGS])) {
-						eatlas_commons_set_form_default_values($form, EATLAS_BRANDING_FIELD_SUPPORTED_BRANDINGS, $branding_values->pid);
-					}
-				}
-			}
-		}
-	}
+    if (isset($form[EATLAS_BRANDING_FIELD_BRANDING]) || isset($form[EATLAS_BRANDING_FIELD_SUPPORTED_BRANDINGS])) {
+        if (eatlas_commons_get_form_operation($form) === 'create') {
+            // Set branding default value to the current branding
+            $branding_id = eatlas_branding_get_branding_id();
+            $branding_values = eatlas_branding_branding_load($branding_id);
+            if ($branding_values) {
+                if (property_exists($branding_values, 'tid')) {
+                    // EATLAS_BRANDING_FIELD_BRANDING = Branding of current page
+                    if (isset($form[EATLAS_BRANDING_FIELD_BRANDING])) {
+                        eatlas_commons_set_form_default_value($form, EATLAS_BRANDING_FIELD_BRANDING, $branding_values->tid);
+                    }
+                }
+                if (property_exists($branding_values, 'pid')) {
+                    // EATLAS_BRANDING_FIELD_SUPPORTED_BRANDINGS = Branding policy for "EATLAS_BRANDING_FIELD_BRANDING" value
+                    if (isset($form[EATLAS_BRANDING_FIELD_SUPPORTED_BRANDINGS])) {
+                        eatlas_commons_set_form_default_values($form, EATLAS_BRANDING_FIELD_SUPPORTED_BRANDINGS, $branding_values->pid);
+                    }
+                }
+            }
+        }
+    }
 }
 
 /**
@@ -503,26 +535,26 @@ function eatlas_branding_set_branding_default_values(&$form) {
  *   The system would work properly even with inconsistent data.
  */
 function _eatlas_branding_form_validate(&$form, &$form_state) {
-	$field_branding = eatlas_commons_get_form_field_values($form_state, EATLAS_BRANDING_FIELD_BRANDING);
-	$field_supported_brandings = eatlas_commons_get_form_field_values($form_state, EATLAS_BRANDING_FIELD_SUPPORTED_BRANDINGS);
+    $field_branding = eatlas_commons_get_form_field_values($form_state, EATLAS_BRANDING_FIELD_BRANDING);
+    $field_supported_brandings = eatlas_commons_get_form_field_values($form_state, EATLAS_BRANDING_FIELD_SUPPORTED_BRANDINGS);
 
-	// If the form has branding and supported branding fields...
-	if (!empty($field_branding) && !empty($field_supported_brandings)) {
-		$branding_id = $field_branding[0];
+    // If the form has branding and supported branding fields...
+    if (!empty($field_branding) && !empty($field_supported_brandings)) {
+        $branding_id = $field_branding[0];
 
-		$found = FALSE;
-		foreach ($field_supported_brandings as $supported_branding_id) {
-			if ($supported_branding_id === $branding_id) {
-				$found = TRUE;
-			}
-		}
+        $found = FALSE;
+        foreach ($field_supported_brandings as $supported_branding_id) {
+            if ($supported_branding_id === $branding_id) {
+                $found = TRUE;
+            }
+        }
 
-		if (!$found) {
-			// Errors on checkboxes are not highlighted on the form.
-			// (that's why I set the error on "field_branding" instead of "field_supported_brandings")
-			form_set_error(EATLAS_BRANDING_FIELD_BRANDING, 'The branding must be one of the supported brandings.');
-		}
-	}
+        if (!$found) {
+            // Errors on checkboxes are not highlighted on the form.
+            // (that's why I set the error on "field_branding" instead of "field_supported_brandings")
+            form_set_error(EATLAS_BRANDING_FIELD_BRANDING, 'The branding must be one of the supported brandings.');
+        }
+    }
 }
 
 
@@ -532,87 +564,87 @@ function _eatlas_branding_form_validate(&$form, &$form_state) {
  * categories provided in the $categories array. FALSE otherwise.
  */
 function eatlas_branding_geonetwork_categories_is_supported($categories, $branding_id = NULL) {
-	if ($branding_id === NULL) {
-		$branding_id = eatlas_branding_get_branding_id();
-	}
+    if ($branding_id === NULL) {
+        $branding_id = eatlas_branding_get_branding_id();
+    }
 
-	if (empty($categories)) {
-		return $branding_id === EATLAS_BRANDING_DEFAULT_BRANDING_ID;
-	}
+    if (empty($categories)) {
+        return $branding_id === EATLAS_BRANDING_DEFAULT_BRANDING_ID;
+    }
 
-	$branding_values = eatlas_branding_branding_load($branding_id);
-	if ($branding_values &&
-			property_exists($branding_values, 'geonetwork_categories') &&
-			!empty($branding_values->geonetwork_categories)) {
-		$supported_categories = preg_split('/[\r\n]+/', $branding_values->geonetwork_categories);
+    $branding_values = eatlas_branding_branding_load($branding_id);
+    if ($branding_values &&
+            property_exists($branding_values, 'geonetwork_categories') &&
+            !empty($branding_values->geonetwork_categories)) {
+        $supported_categories = preg_split('/[\r\n]+/', $branding_values->geonetwork_categories);
 
-		$matching_categories = array_intersect($categories, $supported_categories);
-		return !empty($matching_categories);
-	}
+        $matching_categories = array_intersect($categories, $supported_categories);
+        return !empty($matching_categories);
+    }
 
-	return FALSE;
+    return FALSE;
 }
 
 function eatlas_branding_geonetwork_record_get_canonical_url($categories, $branding_id = NULL) {
-	if (empty($categories)) {
-		// This record is only visible on the eAtlas. No need for a canonical link.
-		return NULL;
-	}
+    if (empty($categories)) {
+        // This record is only visible on the eAtlas. No need for a canonical link.
+        return NULL;
+    }
 
-	// Loop through all brandings to find the supported one
-	$supported_brandings_ids = array();
-	$branding_vocabulary = taxonomy_vocabulary_machine_name_load(EATLAS_BRANDING_VOCABULARY);
-	if ($branding_vocabulary !== NULL) {
-		// Load all terms for that vocabulary
-		$terms = taxonomy_term_load_multiple(array(), array('vid' => $branding_vocabulary->vid));
-		foreach($terms as $term) {
-			if (eatlas_branding_geonetwork_categories_is_supported($categories, $term->tid)) {
-				$supported_brandings_ids[] = $term->tid;
-			}
-		}
-	}
-	$supported_brandings_ids_count = count($supported_brandings_ids);
-	if (!$supported_brandings_ids_count) {
-		// This should not happen, the record support the current branding at least...
-		return NULL;
-	}
-	sort($supported_brandings_ids);
+    // Loop through all brandings to find the supported one
+    $supported_brandings_ids = array();
+    $branding_vocabulary = taxonomy_vocabulary_machine_name_load(EATLAS_BRANDING_VOCABULARY);
+    if ($branding_vocabulary !== NULL) {
+        // Load all terms for that vocabulary
+        $terms = taxonomy_term_load_multiple(array(), array('vid' => $branding_vocabulary->vid));
+        foreach($terms as $term) {
+            if (eatlas_branding_geonetwork_categories_is_supported($categories, $term->tid)) {
+                $supported_brandings_ids[] = $term->tid;
+            }
+        }
+    }
+    $supported_brandings_ids_count = count($supported_brandings_ids);
+    if (!$supported_brandings_ids_count) {
+        // This should not happen, the record support the current branding at least...
+        return NULL;
+    }
+    sort($supported_brandings_ids);
 
-	// There is where the dodgy logic come in:
-	// GeoNetwork do not have capability to set brandings.
-	// We use categories to set the supported brandings, but
-	// that solution do not provide a solution to set the default
-	// branding; the one used for canonical URL.
-	// Solution:
-	// - A record that support only 1 branding do not need a canonical URL
-	// - A record that support 2 brandings:
-	//   - If one is the default branding, the canonical URL goes to the OTHER one.
-	//   - If both branding are not the default, choose the one with the lower ID (just pick one)
-	// - A record that support 3 or more brandings:
-	//   - If one is the default branding, the canonical URL goes to the DEFAULT branding.
-	//   - If none are the default branding, choose the one with the lower ID (just pick one)
-	$default_branding_id = NULL;
-	if ($supported_brandings_ids_count == 1) {
-		// Only one supported branding
-		$default_branding_id = $supported_brandings_ids[0];
-	} else if ($supported_brandings_ids_count == 2) {
-		// 2 supported brandings - choose the first one that is NOT the default branding
-		foreach($supported_brandings_ids as $supported_branding_id) {
-			if ($supported_branding_id !== EATLAS_BRANDING_DEFAULT_BRANDING_ID) {
-				$default_branding_id = $supported_branding_id;
-				break;
-			}
-		}
-	} else if ($supported_brandings_ids_count >= 3) {
-		// 3+ supported brandings - choose the default branding if possible
-		if (in_array(EATLAS_BRANDING_DEFAULT_BRANDING_ID, $supported_brandings_ids)) {
-			$default_branding_id = EATLAS_BRANDING_DEFAULT_BRANDING_ID;
-		} else {
-			$default_branding_id = $supported_brandings_ids[0];
-		}
-	}
+    // There is where the dodgy logic come in:
+    // GeoNetwork do not have capability to set brandings.
+    // We use categories to set the supported brandings, but
+    // that solution do not provide a solution to set the default
+    // branding; the one used for canonical URL.
+    // Solution:
+    // - A record that support only 1 branding do not need a canonical URL
+    // - A record that support 2 brandings:
+    //   - If one is the default branding, the canonical URL goes to the OTHER one.
+    //   - If both branding are not the default, choose the one with the lower ID (just pick one)
+    // - A record that support 3 or more brandings:
+    //   - If one is the default branding, the canonical URL goes to the DEFAULT branding.
+    //   - If none are the default branding, choose the one with the lower ID (just pick one)
+    $default_branding_id = NULL;
+    if ($supported_brandings_ids_count == 1) {
+        // Only one supported branding
+        $default_branding_id = $supported_brandings_ids[0];
+    } else if ($supported_brandings_ids_count == 2) {
+        // 2 supported brandings - choose the first one that is NOT the default branding
+        foreach($supported_brandings_ids as $supported_branding_id) {
+            if ($supported_branding_id !== EATLAS_BRANDING_DEFAULT_BRANDING_ID) {
+                $default_branding_id = $supported_branding_id;
+                break;
+            }
+        }
+    } else if ($supported_brandings_ids_count >= 3) {
+        // 3+ supported brandings - choose the default branding if possible
+        if (in_array(EATLAS_BRANDING_DEFAULT_BRANDING_ID, $supported_brandings_ids)) {
+            $default_branding_id = EATLAS_BRANDING_DEFAULT_BRANDING_ID;
+        } else {
+            $default_branding_id = $supported_brandings_ids[0];
+        }
+    }
 
-	return _eatlas_branding_get_absolute_url($default_branding_id);
+    return _eatlas_branding_get_absolute_url($default_branding_id);
 }
 
 ?>
