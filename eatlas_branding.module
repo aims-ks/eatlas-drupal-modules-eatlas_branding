@@ -478,11 +478,9 @@ function eatlas_branding_form_contact_site_form_alter(&$form, &$form_state) {
 /**
  * Implements hook_mail_alter().
  *   https://api.drupal.org/api/drupal/modules!system!system.api.php/function/hook_mail_alter/7.x
- * Fix the contact form to work with Amazon SMTP service (SES).
  */
 function eatlas_branding_mail_alter(&$message) {
-    // Set the "From" to the email address registered with Amazon SES (otherwise Amazon will refuse to send the email)
-    $from = 'e-atlas@aims.gov.au';
+    $from = 'contact@eatlas.org.au';
     $message['from'] = $from;
     $message['headers']['From'] = $from;
 }
